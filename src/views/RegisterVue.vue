@@ -13,7 +13,8 @@ async function handleRegister() {
     await api.post("/auth/register", {
       name: name.value,
       email: email.value,
-      password: password.value
+      password: password.value,
+      Role: "user"
     });
 
     alert("Registro exitoso, ahora inicia sesión");

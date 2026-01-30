@@ -15,21 +15,24 @@ export async function register(
   name: string,
   password: string,
   email: string,
-  role: string = "User"
+  role: "user" // default a "user"
 ) {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, password, email, role }),
+    body: JSON.stringify({ name, password, email,role }),
   })
 
   if (!res.ok) {
     const error = await res.json()
-    throw new Error(error.message || "Error al registrar")
+    throw new Error(
+      error.errors?.Role?.[0] || error.message || "Error al registrar"
+    )
   }
 
   return res.json()
 }
+
 
 export async function login(name: string, password: string) {
   const res = await fetch(`${API_URL}/auth/login`, {
@@ -81,7 +84,7 @@ export function isAdmin(): boolean {
   if (!user) return false
 
   try {
-    return JSON.parse(user).role === "Admin"
+    return JSON.parse(user).role === "admin"
   } catch {
     return false
   }
