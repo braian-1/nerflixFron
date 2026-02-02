@@ -9,16 +9,23 @@ import { useRouter } from "vue-router"
 
 const router = useRouter()
 
+/* =========================
+   FILTRO
+========================= */
 const filter = ref<"all" | "movies" | "series" | "list">("all")
 
+/* =========================
+   DATOS
+========================= */
 const popularMovies = ref<any[]>([])
 const topMovies = ref<any[]>([])
 const popularSeries = ref<any[]>([])
 const selected = ref<any>(null)
 
+/* =========================
+   USUARIO & ADMIN
+========================= */
 const isAdminUser = computed(() => isAdmin())
-
-/* 👤 USER INFO */
 const user = ref<{ username:string; email:string; role:string } | null>(null)
 const showProfile = ref(false)
 
@@ -29,14 +36,15 @@ onMounted(() => {
 
 function handleLogout() {
   logout()
-  router.push("/login")
+  router.push("/")
 }
 
-/* 🔍 SEARCH */
+/* =========================
+   BÚSQUEDA
+========================= */
 const search = ref("")
 const results = ref<any[]>([])
 const showResults = ref(false)
-
 const imageSmall = "https://image.tmdb.org/t/p/w92"
 
 async function onSearch() {
@@ -49,7 +57,12 @@ async function onSearch() {
   const data = await TmdbService.searchMulti(search.value)
   results.value = data.results
     .filter((r:any) => r.poster_path)
+    .map((r:any) => ({
+      ...r,
+      media_type: r.media_type || (r.title ? "movie" : "tv")
+    }))
     .slice(0,6)
+
   showResults.value = true
 }
 
@@ -59,16 +72,23 @@ function openDetails(item:any) {
   showResults.value = false
 }
 
-/* 🎬 DATA */
+/* =========================
+   CARGA INICIAL
+========================= */
 onMounted(async () => {
+  // Películas populares
   const movies = await TmdbService.getPopularMovies(1)
   popularMovies.value = movies.results.filter((m:any)=>m.poster_path)
 
+  // Top 10 películas
   const top = await TmdbService.getTopRatedMovies()
   topMovies.value = top.results.slice(0,10)
 
+  // Series populares
   const series = await TmdbService.getPopularSeries(1)
-  popularSeries.value = series.results.filter((s:any)=>s.poster_path)
+  popularSeries.value = series.results
+    .filter((s:any)=>s.poster_path)
+    .map((s:any) => ({ ...s, media_type: "tv" }))
 })
 </script>
 
@@ -133,30 +153,42 @@ onMounted(async () => {
     <button v-if="isAdminUser" class="upload-btn">➕</button>
 
     <!-- HERO -->
-    <HeroMovie v-if="popularMovies.length && filter !== 'series'" :movies="popularMovies"/>
+    <HeroMovie
+      v-if="filter === 'all' && popularMovies.length"
+      :movies="popularMovies"
+    />
+    <HeroMovie
+      v-else-if="filter === 'movies' && popularMovies.length"
+      :movies="popularMovies"
+    />
+    <HeroMovie
+      v-else-if="filter === 'series' && popularSeries.length"
+      :movies="popularSeries"
+    />
 
     <!-- 🎬 ROWS -->
     <MovieRow
-      v-if="filter !== 'series'"
+      v-if="filter === 'all' || filter === 'movies'"
       title="🔥 Películas Populares"
       :items="popularMovies"
       @details="selected = $event"
     />
 
     <MovieRow
-      v-if="filter !== 'series'"
+      v-if="filter === 'all' || filter === 'movies'"
       title="⭐ Top 10 Películas"
       :items="topMovies"
       @details="selected = $event"
     />
 
     <MovieRow
-      v-if="filter !== 'movies'"
+      v-if="filter === 'all' || filter === 'series'"
       title="📺 Series Populares"
       :items="popularSeries"
       @details="selected = $event"
     />
 
+    <!-- MODAL -->
     <MovieModal
       v-if="selected"
       :movie="selected"

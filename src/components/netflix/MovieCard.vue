@@ -11,6 +11,10 @@ const imageBase = "https://image.tmdb.org/t/p/w500"
 
     <div class="overlay">
       <button @click="$emit('details', movie)">Ver detalles</button>
+      <button class="favorite" @click="handleToggleFavorite">
+  {{ favorite ? '✅ En Mi Lista' : '⭐ Mi Lista' }}
+</button>
+
 
       <template v-if="isAdmin()">
         <button class="edit">✏️</button>
@@ -47,6 +51,12 @@ const imageBase = "https://image.tmdb.org/t/p/w500"
   opacity: 0;
   transition: .3s;
 }
+
+.overlay .favorite {
+  background: #f0c419; /* amarillo */
+  color: #000;
+}
+
 
 .card:hover .overlay {
   opacity: 1;
